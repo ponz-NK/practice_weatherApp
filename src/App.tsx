@@ -4,51 +4,25 @@ import Title from "./components/Title"
 import Form from "./components/Form"
 import Results from "./components/Results"
 import Loading from "./components/Loading"
-import { useState } from "react"
-
-type ResultsState = {
-  country: string
-  cityName: string
-  temperature: string
-  conditionText: string
-  icon: string
-}
+import { useActionState } from "react"
 
 const App = () => {
-  const [loading, setLoading] = useState<boolean>(false)
-  const [city, setCity] = useState<string>("")
-  const [results, setResults] = useState<ResultsState>({
-    country: "",
-    cityName: "",
-    temperature: "",
-    conditionText: "",
-    icon: ""
-  })
-
-  const getWeather = (e:React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault()
-      setLoading(true)
-      fetch(`https://api.weatherapi.com/v1/current.json?key=317f52c768b0408ea9e113750251608&q=${city}&aqi=no`)
-      .then(res => res.json())
-      .then(data => {
-        setResults({
-          country: data.location.country,
-          cityName: data.location.name,
-          temperature: data.current.temp_c,
-          conditionText: data.current.condition.text,
-          icon: data.current.condition.icon
-        })
-        setLoading(false)
-      })
+  const getWeather = (_prevState: any, formData: FormData) => {
+    const city = formData.get("city")
+    return fetch(`https://api.weatherapi.com/v1/current.json?key=317f52c768b0408ea9e113750251608&q=${city}&aqi=no`)
+          .then(res => res.json())
+          .then(data => data)
   }
 
-  return (
+  const [returnedData, formAction, isPending] = useActionState(getWeather, "")
+
+  return(
     <div className="wrapper">
       <div className="container">
-          <Title/>
-          <Form setCity={setCity} getWeather={getWeather}/>
-          {loading ? <Loading/> : <Results results={results}/>}
-      </div>   
+        <Title/>
+        <Form getWeather={formAction}/>
+        {isPending ? <Loading/> : <Results results={returnedData}/>}
+      </div>
     </div>
   )
 }
